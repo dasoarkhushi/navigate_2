@@ -282,7 +282,7 @@ import SendIcon from "@mui/icons-material/Send";
 const ChatBot = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { sender: "Test Key", text: "Hi! Need help with FinFolio?" }
+    { sender: "Test Key 3", text: "Hi! Need help with NAVigate?" }
   ]);
   const [input, setInput] = useState("");
   const theme = useTheme();
@@ -306,7 +306,7 @@ const ChatBot = () => {
       const data = await res.json();
 
       const botMessage = {
-        sender: "Test Key",
+        sender: "Test Key 3",
         text: data.reply || "No response from assistant."
       };
 
@@ -322,7 +322,7 @@ const ChatBot = () => {
   return (
     <Box position="fixed" bottom={20} right={20} zIndex={1000}>
       {!open && (
-        <Tooltip title="Chat with FinFolio Assistant">
+        <Tooltip title="Chat with NAVigate Assistant">
           <IconButton
             onClick={toggleChat}
             sx={{
@@ -355,7 +355,7 @@ const ChatBot = () => {
           elevation={6}
         >
           <Typography variant="h6" mb={1} color="green">
-            FinFolio Assistant
+            NAVigate Assistant
           </Typography>
 
           <Box flex={1} overflow="auto" mb={1}>

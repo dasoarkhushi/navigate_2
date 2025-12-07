@@ -58,7 +58,7 @@ export default function Support() {
 }
  */
 
-import React, { useState } from "react";
+/* import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -146,6 +146,131 @@ export default function Support() {
                   <Typography variant="body1">
                     <LocationOn fontSize="small" sx={{ mr: 1 }} />
                     <strong>Address:</strong> 2nd Floor, A-Block, FinTech Tower, New Delhi – 110001
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        <Snackbar
+          open={open}
+          autoHideDuration={4000}
+          onClose={() => setOpen(false)}
+        >
+          <Alert severity="success" sx={{ width: "100%" }}>
+            Message sent successfully!
+          </Alert>
+        </Snackbar>
+      </Container>
+
+      <ChatBot />
+    </Box>
+  );
+}
+ */
+
+import React, { useState } from "react";
+import {
+  Box,
+  Typography,
+  Container,
+  Snackbar,
+  Alert,
+  Paper,
+  Grid,
+  List,
+  ListItem,
+  ListItemText,
+  useTheme,
+  Divider,
+} from "@mui/material";
+import { Chat, HelpOutline, MailOutline, Phone, LocationOn } from "@mui/icons-material";
+import { tokens } from "../theme";
+import ChatBot from "../components/ChatBot"; // Floating assistant
+
+export default function Support() {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Box
+      sx={{
+        bgcolor: colors.primary[900],
+        color: colors.grey[100],
+        minHeight: "100vh",
+        py: 6,
+        position: "relative",
+      }}
+    >
+      <Container maxWidth="md">
+        <Grid container spacing={4} justifyContent="center">
+          <Grid item xs={12}>
+            <Paper
+              elevation={4}
+              sx={{
+                p: 4,
+                borderRadius: 4,
+                background: `linear-gradient(135deg, ${colors.primary[700]}, ${colors.primary[600]})`,
+                color: colors.grey[100],
+                boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+              }}
+            >
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                gutterBottom
+                sx={{ color: colors.greenAccent[400] }}
+              >
+                Get Help & Contact Information
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 3, color: colors.grey[200] }}>
+                Ask our assistant for any queries about your mutual fund investments or browse help topics below.
+              </Typography>
+              <Grid container spacing={3}>
+                {/* Help Topics */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom color={colors.grey[100]}>
+                    <HelpOutline sx={{ verticalAlign: "middle", mr: 1 }} /> Common Help Topics
+                  </Typography>
+                  <Divider sx={{ mb: 1, borderColor: colors.primary[500] }} />
+                  <List dense>
+                    <ListItem>
+                      <ListItemText primary="How to start investing in mutual funds" />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText primary="Understanding SIP vs lumpsum investments" />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText primary="Tracking NAV and portfolio performance in NAVigate" />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText primary="Managing risk profile and fund categories" />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText primary="Account and security settings in NAVigate" />
+                    </ListItem>
+                  </List>
+                </Grid>
+
+                {/* Contact Info */}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom color={colors.grey[100]}>
+                    <Chat sx={{ verticalAlign: "middle", mr: 1 }} /> Contact Information
+                  </Typography>
+                  <Divider sx={{ mb: 1, borderColor: colors.primary[500] }} />
+                  <Typography variant="body1" gutterBottom>
+                    <MailOutline fontSize="small" sx={{ mr: 1 }} />
+                    <strong>Email:</strong> navigatehelpdesk@gmail.com
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    <Phone fontSize="small" sx={{ mr: 1 }} />
+                    <strong>Phone:</strong> +91 99993 24034
+                  </Typography>
+                  <Typography variant="body1">
+                    <LocationOn fontSize="small" sx={{ mr: 1 }} />
+                    <strong>Address:</strong> 2nd Floor, A-Block, NAVigate Support Center, New Delhi – 110001
                   </Typography>
                 </Grid>
               </Grid>

@@ -566,7 +566,7 @@ const PurchasePage = ({ email }) => {
 
 export default PurchasePage; */
 
-import React, { useState, useEffect } from "react";
+/* import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -778,6 +778,296 @@ const PurchasePage = ({ email }) => {
               Sell
             </Button>
           </Box>
+        </CardContent>
+      </Card>
+
+      <Snackbar
+        open={alert.open}
+        autoHideDuration={4000}
+        onClose={() => setAlert({ ...alert, open: false })}
+      >
+        <Alert severity={alert.severity} variant="filled">
+          {alert.msg}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+};
+
+export default PurchasePage;
+ */
+
+
+// src/pages/PurchasePage.jsx  (converted to Mutual Fund purchase)
+
+// src/pages/PurchasePage.jsx
+
+// src/pages/PurchasePage.jsx  (MF version)
+
+import React, { useState } from "react";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Card,
+  CardContent,
+  useTheme,
+  Snackbar,
+  Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+import { tokens } from "../../theme";
+import Header from "../../components/Header";
+
+// 🔹 Your already input mutual funds master list
+const baseMutualFunds = [
+  { code: "120503", name: "SBI Bluechip Fund - Direct Plan - Growth", category: "Large Cap" },
+  { code: "119551", name: "HDFC Top 100 Fund - Direct Plan - Growth", category: "Large Cap" },
+  { code: "118834", name: "ICICI Prudential Equity & Debt Fund - Direct Plan - Growth", category: "Hybrid" },
+  { code: "101206", name: "Nippon India Small Cap Fund - Direct Plan - Growth", category: "Small Cap" },
+  { code: "120823", name: "Axis Bluechip Fund - Direct Plan - Growth", category: "Large Cap" },
+  { code: "126497", name: "Mirae Asset Large Cap Fund - Direct Plan - Growth", category: "Large Cap" },
+  { code: "118574", name: "Kotak Emerging Equity Fund - Direct Plan - Growth", category: "Mid Cap" },
+  { code: "125354", name: "SBI Small Cap Fund - Direct Plan - Growth", category: "Small Cap" },
+  { code: "102885", name: "HDFC Mid-Cap Opportunities Fund - Direct Plan - Growth", category: "Mid Cap" },
+  { code: "120759", name: "Axis Small Cap Fund - Direct Plan - Growth", category: "Small Cap" },
+  { code: "112588", name: "DSP Midcap Fund - Direct Plan - Growth", category: "Mid Cap" },
+  { code: "135781", name: "UTI Nifty 50 Index Fund - Direct Plan - Growth", category: "Index" },
+  { code: "135779", name: "HDFC Nifty 50 Index Fund - Direct Plan - Growth", category: "Index" },
+  { code: "129865", name: "ICICI Prudential Nifty Next 50 Index Fund - Direct Plan - Growth", category: "Index" },
+  { code: "145678", name: "SBI Equity Hybrid Fund - Direct Plan - Growth", category: "Hybrid" },
+  { code: "145679", name: "HDFC Hybrid Equity Fund - Direct Plan - Growth", category: "Hybrid" },
+  { code: "110458", name: "Axis Long Term Equity Fund - Direct Plan - Growth", category: "ELSS" },
+  { code: "110459", name: "Mirae Asset Tax Saver Fund - Direct Plan - Growth", category: "ELSS" },
+  { code: "110460", name: "Canara Robeco Equity Tax Saver - Direct Plan - Growth", category: "ELSS" },
+  { code: "130234", name: "ICICI Prudential Technology Fund - Direct Plan - Growth", category: "Sectoral/Thematic" },
+  { code: "130235", name: "Tata Digital India Fund - Direct Plan - Growth", category: "Sectoral/Thematic" },
+];
+
+const PurchasePage = ({ email }) => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
+  // 🔽 Selected MF + amount
+  const [selectedCode, setSelectedCode] = useState("");
+  const [selectedName, setSelectedName] = useState("");
+  const [amount, setAmount] = useState("");
+
+  // 🔍 Search text to filter the above list
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [alert, setAlert] = useState({
+    open: false,
+    msg: "",
+    severity: "success",
+  });
+  const [loading, setLoading] = useState(false);
+
+  // 👉 Filter MFs from your hardcoded list based on search
+  const filteredFunds = baseMutualFunds.filter((mf) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      mf.name.toLowerCase().includes(q) ||
+      mf.code.toLowerCase().includes(q) ||
+      mf.category.toLowerCase().includes(q)
+    );
+  });
+
+  // 🧲 When user selects an MF from dropdown
+  const handleSelectScheme = (code) => {
+    setSelectedCode(code);
+    const mf = baseMutualFunds.find((f) => f.code === code);
+    setSelectedName(mf ? mf.name : "");
+  };
+
+  // 🟢 Buy or 🔴 Sell – just saved via backend, no payment gateway
+  const handleTransaction = async (type) => {
+    try {
+      const userEmail =
+        email || JSON.parse(localStorage.getItem("user"))?.email;
+
+      if (!userEmail || !selectedCode || !amount) {
+        throw new Error("Please select a mutual fund and enter amount.");
+      }
+
+      const numericAmount = Number(amount);
+      if (!numericAmount || numericAmount <= 0) {
+        throw new Error("Amount must be greater than 0.");
+      }
+
+      setLoading(true);
+
+      // 🔁 This is your demo “transaction” call – no payment gateway
+      const res = await fetch(
+        `http://localhost:3001/api/mf/${type}`, // /api/mf/buy or /api/mf/sell
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: userEmail,
+            schemeCode: selectedCode,
+            schemeName: selectedName,
+            amount: numericAmount,
+            source: "NAVigate", // just info
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `${type} request failed.`);
+      }
+
+      localStorage.setItem("mf-portfolio-updated", new Date().toISOString());
+
+      setAlert({
+        open: true,
+        msg:
+          type === "buy"
+            ? "Mutual fund purchase recorded successfully."
+            : "Mutual fund sell order recorded successfully.",
+        severity: "success",
+      });
+
+      setAmount("");
+    } catch (err) {
+      console.error(err);
+      setAlert({
+        open: true,
+        msg: `${
+          type === "buy" ? "Buy" : "Sell"
+        } failed: ${err.message}`,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Box m="20px">
+      <Header
+        title="TRADE MUTUAL FUNDS"
+        subtitle="Buy or sell mutual funds from the NAVigate MF list"
+      />
+
+      <Card sx={{ backgroundColor: colors.primary[400], borderRadius: 2 }}>
+        <CardContent>
+          <Typography
+            variant="h5"
+            fontWeight="600"
+            gutterBottom
+            color={colors.greenAccent[400]}
+          >
+            Place MF Order
+          </Typography>
+
+          {/* 🔍 SEARCH + SELECT SECTION (FROM ALREADY INPUT MFs) */}
+          <TextField
+            fullWidth
+            label="Search Mutual Fund (by name, code, or category)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            margin="normal"
+            variant="filled"
+            sx={{
+              mt: 2,
+              backgroundColor: colors.primary[300],
+              borderRadius: 1,
+              "& input": { color: colors.grey[100] },
+              "& label": { color: colors.grey[300] },
+            }}
+          />
+
+          <FormControl fullWidth variant="filled" sx={{ mt: 2, mb: 3 }}>
+            <InputLabel sx={{ color: colors.grey[300] }}>
+              Select Mutual Fund
+            </InputLabel>
+            <Select
+              value={selectedCode}
+              onChange={(e) => handleSelectScheme(e.target.value)}
+              sx={{
+                backgroundColor: colors.primary[300],
+                color: colors.grey[100],
+                borderRadius: 1,
+                "& .MuiSvgIcon-root": { color: colors.grey[100] },
+              }}
+            >
+              {filteredFunds.length === 0 ? (
+                <MenuItem disabled>No mutual funds match your search.</MenuItem>
+              ) : (
+                filteredFunds.map((mf) => (
+                  <MenuItem key={mf.code} value={mf.code}>
+                    {mf.name} ({mf.code}) — {mf.category}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+          </FormControl>
+
+          {/* 💰 AMOUNT INPUT */}
+          <TextField
+            fullWidth
+            label="Amount (₹)"
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            margin="normal"
+            variant="filled"
+            sx={{
+              backgroundColor: colors.primary[300],
+              borderRadius: 1,
+              "& input": { color: colors.grey[100] },
+              "& label": { color: colors.grey[300] },
+            }}
+          />
+
+          {/* 🟢 BUY / 🔴 SELL BUTTONS */}
+          <Box display="flex" justifyContent="space-between" mt={3}>
+            <Button
+              variant="contained"
+              onClick={() => handleTransaction("buy")}
+              disabled={!selectedCode || !amount || loading}
+              sx={{
+                width: "48%",
+                py: 1.5,
+                backgroundColor: colors.greenAccent[600],
+                fontWeight: "bold",
+                fontSize: "1rem",
+              }}
+            >
+              {loading ? "Processing..." : "Buy"}
+            </Button>
+
+            <Button
+              variant="contained"
+              onClick={() => handleTransaction("sell")}
+              disabled={!selectedCode || !amount || loading}
+              sx={{
+                width: "48%",
+                py: 1.5,
+                backgroundColor: "#f44336",
+                fontWeight: "bold",
+                fontSize: "1rem",
+              }}
+            >
+              {loading ? "Processing..." : "Sell"}
+            </Button>
+          </Box>
+
+          <Typography
+            variant="caption"
+            display="block"
+            mt={2}
+            color={colors.grey[300]}
+          >
+            This is a simulated trade on NAVigate. No payment gateway is used;
+            orders are stored only in your backend/DB.
+          </Typography>
         </CardContent>
       </Card>
 

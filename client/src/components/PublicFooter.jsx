@@ -10,7 +10,7 @@ export default function PublicFooter() {
   return (
     <Box sx={{ bgcolor: colors.greenAccent[600], textAlign: "center", py: 3 }}>
       <Typography variant="body2" color={theme.palette.mode === "light" ? colors.grey[900] : colors.grey[100]}>
-        © {new Date().getFullYear()} FinFolio • Smart Tools for Smart Investors
+        © {new Date().getFullYear()} NAVigate • Your Intelligent Mutual Fund Companion
       </Typography>
     </Box>
   );

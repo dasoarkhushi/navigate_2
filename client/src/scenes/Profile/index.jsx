@@ -219,7 +219,7 @@ export default function Profile() {
 } */
  
 
-import React, { useEffect, useState } from "react";
+/* import React, { useEffect, useState } from "react";
 import {
   Box,
   Card,
@@ -426,6 +426,289 @@ useEffect(() => {
                   <td>Completed</td>
                 </tr>
               ))}
+            </tbody>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+}
+ */
+
+
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Card,
+  CardContent,
+  Avatar,
+  Typography,
+  Button,
+  useTheme,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  TextField,
+} from "@mui/material";
+import { tokens } from "../../theme";
+import Header from "../../components/Header";
+import { fetchMutualFundDetails } from "../../api/mutualfunds";
+import { fetchTradesByEmail } from "../../services/tradeService";
+
+export default function Profile() {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
+  const [trades, setTrades] = useState([]);
+  const [filter, setFilter] = useState("All");
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+
+  const [portfolioStats, setPortfolioStats] = useState({
+    totalValue: 0,
+    todaysPL: 0,
+    overallPL: 0,
+    invested: 0,
+    cash: 120000,
+  });
+
+  // ---------------------------------------
+  // LOAD USER + MUTUAL FUND PORTFOLIO
+  // ---------------------------------------
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (!storedUser) return;
+
+    setName(storedUser.name || "");
+    setUsername(storedUser.email || "");
+
+    const load = async () => {
+      const rawTrades = await fetchTradesByEmail(storedUser.email);
+      if (!Array.isArray(rawTrades)) return;
+
+      // Enrich trades with NAV data
+      const enriched = await Promise.all(
+        rawTrades.map(async (t) => {
+          const mf = await fetchMutualFundDetails(t.code);
+
+          return {
+            ...t,
+            schemeName: mf?.schemeName || t.code,
+            nav: mf?.nav || 0,
+            prevNav: mf?.prevNav || mf?.nav || 0,
+            navChange: (mf?.nav || 0) - (mf?.prevNav || mf?.nav || 0),
+            qty: t.quantity,
+            type: t.quantity > 0 ? "Buy" : "Sell",
+            date: new Date(t.tradeTime).toLocaleDateString(),
+          };
+        })
+      );
+
+      // Investment Summary
+      const invested = enriched
+        .filter((t) => t.type === "Buy")
+        .reduce((sum, t) => sum + t.price * t.qty, 0);
+
+      const currentValue = enriched.reduce(
+        (sum, t) => sum + t.nav * t.qty,
+        0
+      );
+
+      const todaysChange = enriched.reduce(
+        (sum, t) => sum + t.navChange * t.qty,
+        0
+      );
+
+      setPortfolioStats({
+        totalValue: currentValue,
+        todaysPL: todaysChange,
+        overallPL: currentValue - invested,
+        invested,
+        cash: 120000,
+      });
+
+      setTrades(enriched);
+    };
+
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSave = () => {
+    const updatedUser = { name, email: username };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setIsEditing(false);
+  };
+
+  const filteredTrades =
+    filter === "All" ? trades : trades.filter((t) => t.type === filter);
+
+  // ---------------------------------------
+  // UI
+  // ---------------------------------------
+  return (
+    <Box m="20px">
+      
+      <Header title="PROFILE" subtitle="Mutual Fund Portfolio Overview" />
+
+      {/* TOP PROFILE CARD */}
+      <Card sx={{ backgroundColor: colors.primary[400] }}>
+        <CardContent sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Box display="flex" gap={2}>
+            <Avatar sx={{ width: 64, height: 64 }} />
+            <Box>
+              {isEditing ? (
+                <>
+                  <TextField
+                    variant="outlined"
+                    size="small"
+                    label="Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    sx={{ mb: 1 }}
+                  />
+
+                  <TextField
+                    variant="outlined"
+                    size="small"
+                    label="Email"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <Typography variant="h5" fontWeight={600}>{name}</Typography>
+                  <Typography color={colors.grey[300]}>{username}</Typography>
+                  <Typography fontSize="12px" color={colors.grey[500]}>
+                    Member since 2023
+                  </Typography>
+                </>
+              )}
+            </Box>
+          </Box>
+
+          <Button
+            variant="contained"
+            onClick={isEditing ? handleSave : () => setIsEditing(true)}
+          >
+            {isEditing ? "Save" : "Edit Profile"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* PORTFOLIO STATISTICS */}
+      <Card sx={{ backgroundColor: colors.primary[400], mt: 2 }}>
+        <CardContent
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+            gap: 2,
+          }}
+        >
+          {[
+            {
+              label: "Total Mutual Fund Value",
+              value: `₹${portfolioStats.totalValue.toLocaleString("en-IN")}`,
+            },
+            {
+              label: "Today's Gain / Loss",
+              value: `₹${portfolioStats.todaysPL.toFixed(2)}`,
+              color: portfolioStats.todaysPL >= 0 ? "green" : "red",
+            },
+            {
+              label: "Overall Gain / Loss",
+              value: `₹${portfolioStats.overallPL.toFixed(2)}`,
+              color: portfolioStats.overallPL >= 0 ? "green" : "red",
+            },
+            {
+              label: "Total Invested",
+              value: `₹${portfolioStats.invested.toLocaleString("en-IN")}`,
+            },
+            {
+              label: "Available Cash",
+              value: `₹${portfolioStats.cash.toLocaleString("en-IN")}`,
+            },
+          ].map((item, i) => (
+            <Box key={i}>
+              <Typography fontSize="13px" color={colors.grey[300]}>
+                {item.label}
+              </Typography>
+              <Typography
+                fontSize="15px"
+                fontWeight={600}
+                color={item.color || colors.grey[100]}
+              >
+                {item.value}
+              </Typography>
+            </Box>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* RECENT MUTUAL FUND TRADES */}
+      <Card sx={{ backgroundColor: colors.primary[400], mt: 2 }}>
+        <CardContent>
+          <Box display="flex" justifyContent="space-between" mb={2}>
+            <Typography variant="h6" fontWeight={600}>
+              Recent Mutual Fund Transactions
+            </Typography>
+
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>Filter</InputLabel>
+              <Select
+                value={filter}
+                label="Filter"
+                onChange={(e) => setFilter(e.target.value)}
+              >
+                <MenuItem value="All">All</MenuItem>
+                <MenuItem value="Buy">Buy</MenuItem>
+                <MenuItem value="Sell">Sell</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+
+          <Box component="table" width="100%" fontSize="14px">
+            <thead>
+              <tr style={{ color: colors.grey[300] }}>
+                <th>Date</th>
+                <th>Scheme</th>
+                <th>Code</th>
+                <th>Type</th>
+                <th>Units</th>
+                <th>Purchase NAV</th>
+                <th>Current NAV</th>
+                <th>NAV Change</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredTrades.map((t, i) => (
+                <tr key={i}>
+                  <td>{t.date}</td>
+                  <td>{t.schemeName}</td>
+                  <td>{t.code}</td>
+                  <td>{t.type}</td>
+                  <td>{t.qty}</td>
+                  <td>₹{t.price.toFixed(2)}</td>
+                  <td>₹{t.nav.toFixed(2)}</td>
+                  <td>₹{t.navChange.toFixed(2)}</td>
+                </tr>
+              ))}
+
+              {filteredTrades.length === 0 && (
+                <tr>
+                  <td colSpan={8} style={{ paddingTop: 16 }}>
+                    <Typography color={colors.grey[400]} textAlign="center">
+                      No transactions found.
+                    </Typography>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </Box>
         </CardContent>

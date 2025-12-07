@@ -30,7 +30,7 @@ export default function PublicHeader() {
           sx={{ cursor: "pointer" }}
           onClick={() => navigate("/")}
         >
-          FinFolio
+          NAVigate
         </Typography>
 
         <Box display="flex" alignItems="center" gap={2}>
